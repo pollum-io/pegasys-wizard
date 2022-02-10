@@ -86,17 +86,10 @@
   };
 
   const compilerHandler = async () => {
-    // const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    // // Prompt user for account connections
-    // await provider.send("eth_requestAccounts", []);
-    // const signer = provider.getSigner();
-    // console.log("Account:", await signer.getAddress());
-    
-    // console.log(code);
     if (opts) {
-       const url = 'http://localhost:3000/compiler'
-       const titleContract = opts.name
-       console.log(titleContract)
+      const url = "http://localhost:3000/compiler";
+      const titleContract = opts.name;
+      console.log(titleContract);
       axios.defaults.headers.post["Content-Type"] =
         "application/x-www-form-urlencoded";
       axios
@@ -106,7 +99,10 @@
         })
         .then((res) => {
           console.log(res);
-            });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   };
 
@@ -116,25 +112,29 @@
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
-    
+
     console.log(code);
     if (opts) {
-       const url = 'http://localhost:3000/compiler'
-       const titleContract = opts.name
-       console.log(titleContract)
-     
-          axios
-            .get(url+`/${titleContract}`)
-            .then( (response) => {
-              console.log(response.data);
-              const abi = response.data.abi
-              const bytecode = response.data.bytecode
-              const contract = new ethers.ContractFactory(abi, bytecode, signer);
-              contract.deploy();
-            });
+      const url = "http://localhost:3000/compiler";
+      const titleContract = opts.name;
+      console.log(titleContract);
+
+      axios
+        .get(url + `/${titleContract}`)
+        .then((response) => {
+          console.log(response.data);
+          const abi = response.data.abi;
+          const bytecode = response.data.bytecode;
+          const contract = new ethers.ContractFactory(abi, bytecode, signer);
+          contract.deploy().catch((err) => {
+            console.log(err);
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   };
-  
 
   const downloadNpmHandler = async () => {
     const blob = new Blob([code], { type: "text/plain" });
@@ -202,13 +202,13 @@
         Compile
       </button>
       <button
-      class="action-button"
-      class:disabled={opts?.upgradeable}
-      on:click={deployHandler}
-    >
-      <RemixIcon />
-      Deploy
-    </button>
+        class="action-button"
+        class:disabled={opts?.upgradeable}
+        on:click={deployHandler}
+      >
+        <RemixIcon />
+        Deploy
+      </button>
       <Tooltip
         let:trigger
         disabled={!opts?.upgradeable}
