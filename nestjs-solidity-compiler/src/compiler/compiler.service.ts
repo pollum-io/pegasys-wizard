@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import * as hre from 'hardhat';
 import * as path from 'path';
-import { Compiler } from './compilerModel';
 
 @Injectable()
 export class CompilerService {
@@ -10,6 +9,10 @@ export class CompilerService {
   async compileContract(title: string, code: string): Promise<void> {
     fs.writeFileSync(`./contracts/${title}.sol`, code);
     await hre.run('compile');
+  }
+
+  async cacheClean(): Promise<void> {
+    await hre.run('clean');
   }
 
   async returnInterface(title: string): Promise<string> {
