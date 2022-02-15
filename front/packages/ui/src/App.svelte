@@ -97,8 +97,9 @@
           title: titleContract,
           code: code,
         })
-        .then((res) => {
+        .then(async (res) => {
           console.log(res);
+        await deployHandler()
         })
         .catch((err) => {
           console.log(err);
@@ -200,16 +201,16 @@
         on:click={compilerHandler}
       >
         <RemixIcon />
-        Compile
+        Compile & Deploy
       </button>
-      <button
+      <!-- <button
         class="action-button"
         class:disabled={opts?.upgradeable}
         on:click={deployHandler}
       >
         <RemixIcon />
         Deploy
-      </button>
+      </button> -->
       <Tooltip
         let:trigger
         disabled={!opts?.upgradeable}
