@@ -98,7 +98,7 @@ body {
 }
 .wizard {
   background-color: #f9fafb;
-  box-shadow: 0px 10px 40px rgb(108 133 171 / 20%);
+  box-shadow: 0px 10px 40px rgba(43, 168, 64, 0.2);
   border-radius: 1rem;
   min-width: 800px;
   max-width: 1100px;

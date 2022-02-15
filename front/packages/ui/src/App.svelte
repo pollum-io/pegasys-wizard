@@ -121,14 +121,15 @@
 
       axios
         .get(url + `/${titleContract}`)
-        .then((response) => {
+        .then(async (response) => {
           console.log(response.data);
           const abi = response.data.abi;
           const bytecode = response.data.bytecode;
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
-          contract.deploy().catch((err) => {
+          await contract.deploy().catch((err) => {
             console.log(err);
           });
+
         })
         .catch((err) => {
           console.log(err);
