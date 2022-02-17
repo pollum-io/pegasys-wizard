@@ -109,17 +109,13 @@
 
   const deployHandler = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    // Prompt user for account connections
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
-
-    console.log(code);
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
       console.log(titleContract);
-
       axios
         .get(url + `/${titleContract}`)
         .then(async (response) => {

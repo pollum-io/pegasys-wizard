@@ -12,11 +12,6 @@ export class CompilerController {
     return this.compilerService.returnInterface(title);
   }
 
-  @Get('/clean-hardhat')
-  async cleanHardhat(): Promise<void> {
-    await this.compilerService.cacheClean();
-  }
-
   @Post()
   async compileContract(@Body() compiler: Compiler): Promise<void> {
     const { title, code } = compiler;
