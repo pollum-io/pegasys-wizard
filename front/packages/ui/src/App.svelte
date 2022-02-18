@@ -85,16 +85,27 @@
     }
   };
 
+  function removeNumbersFromFront(srt){
+                var i = 0;
+                while (srt[i] >= '0' && srt[i] <= '9') {
+                    i++;
+                }
+                return srt.substring(i);
+
+            }
+
   const compilerHandler = async () => {
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
-      console.log(titleContract);
+
+      const contractNoNumber = removeNumbersFromFront(titleContract); 
+           console.log(contractNoNumber);
       axios.defaults.headers.post["Content-Type"] =
         "application/x-www-form-urlencoded";
       axios
         .post(url, {
-          title: titleContract,
+          title: contractNoNumber,
           code: code,
         })
         .then(async (res) => {
@@ -115,9 +126,10 @@
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
-      console.log(titleContract);
+      const contractNoNumber = removeNumbersFromFront(titleContract); 
+      console.log(contractNoNumber);
       axios
-        .get(url + `/${titleContract}`)
+        .get(url + `/${contractNoNumber}`)
         .then(async (response) => {
           console.log(response.data);
           const abi = response.data.abi;
@@ -177,12 +189,7 @@
         >
           ERC1155
         </button>
-        <button
-          class:selected={tab === "Governor"}
-          on:click={() => (tab = "Governor")}
-        >
-          Governor
-        </button>
+
       </OverflowMenu>
     </div>
 
@@ -199,14 +206,6 @@
         <RemixIcon />
         Compile & Deploy
       </button>
-      <!-- <button
-        class="action-button"
-        class:disabled={opts?.upgradeable}
-        on:click={deployHandler}
-      >
-        <RemixIcon />
-        Deploy
-      </button> -->
       <Tooltip
         let:trigger
         disabled={!opts?.upgradeable}
@@ -277,12 +276,7 @@
       <div class:hidden={tab !== "ERC1155"}>
         <ERC1155Controls bind:opts={allOpts.ERC1155} />
       </div>
-      <div class:hidden={tab !== "Governor"}>
-        <GovernorControls
-          bind:opts={allOpts.Governor}
-          errors={errors.Governor}
-        />
-      </div>
+
       <div class="controls-footer">
         <a href="https://forum.openzeppelin.com/" target="_blank">
           <ForumIcon /> Forum

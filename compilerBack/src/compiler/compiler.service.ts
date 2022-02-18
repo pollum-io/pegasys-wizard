@@ -29,9 +29,9 @@ export class CompilerService {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
+
   async returnInterface(title: string): Promise<string> {
     const capitalizedTitle = await this.capitalizeFirstLetter(title);
-    // if( await fs.existsSync(`artifacts/contracts/${capitalizedTitle}.sol/${capitalizedTitle}.json`)) {
     const content = await fs.readFileSync(
       path.resolve(
         `artifacts/contracts/${capitalizedTitle}.sol/${capitalizedTitle}.json`,
