@@ -85,32 +85,37 @@
     }
   };
 
-  function removeNumbersFromFront(srt){
-                var i = 0;
-                while (srt[i] >= '0' && srt[i] <= '9') {
-                    i++;
-                }
-                return srt.substring(i);
+  function removeNumbersFromFront(srt) {
+    var i = 0;
+    while (srt[i] >= "0" && srt[i] <= "9") {
+      i++;
+    }
+    return srt.substring(i);
+  }
 
-            }
+  function removeSymbolsFromFront(srt) {
+    var outString = srt.replace(/[`~!@#%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
+    return outString
+  }
 
   const compilerHandler = async () => {
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
 
-      const contractNoNumber = removeNumbersFromFront(titleContract); 
-           console.log(contractNoNumber);
+      const contractNoNumber = removeNumbersFromFront(titleContract);
+      const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+      console.log(contractNoSymbols);
       axios.defaults.headers.post["Content-Type"] =
         "application/x-www-form-urlencoded";
       axios
         .post(url, {
-          title: contractNoNumber,
+          title: contractNoSymbols,
           code: code,
         })
         .then(async (res) => {
           console.log(res);
-        await deployHandler()
+          await deployHandler();
         })
         .catch((err) => {
           console.log(err);
@@ -126,10 +131,11 @@
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
-      const contractNoNumber = removeNumbersFromFront(titleContract); 
-      console.log(contractNoNumber);
+      const contractNoNumber = removeNumbersFromFront(titleContract);
+      const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+      console.log(contractNoSymbols);
       axios
-        .get(url + `/${contractNoNumber}`)
+        .get(url + `/${contractNoSymbols}`)
         .then(async (response) => {
           console.log(response.data);
           const abi = response.data.abi;
@@ -138,7 +144,6 @@
           await contract.deploy().catch((err) => {
             console.log(err);
           });
-
         })
         .catch((err) => {
           console.log(err);
@@ -189,7 +194,6 @@
         >
           ERC1155
         </button>
-
       </OverflowMenu>
     </div>
 

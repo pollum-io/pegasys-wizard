@@ -31,7 +31,9 @@ export class CompilerService {
 
 
   async returnInterface(title: string): Promise<string> {
+    title.replace(/[`~!@#%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
     const capitalizedTitle = await this.capitalizeFirstLetter(title);
+   
     const content = await fs.readFileSync(
       path.resolve(
         `artifacts/contracts/${capitalizedTitle}.sol/${capitalizedTitle}.json`,
