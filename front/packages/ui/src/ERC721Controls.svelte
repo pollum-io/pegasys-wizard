@@ -48,7 +48,9 @@
   <div class="grid grid-cols-1 gap-2">
     <label class="labeled-input col-span-2">
       <span>Name</span>
-      <input bind:value={opts.name}>
+      <input 
+      type="text" pattern="[^`~!@#$%\^&*()_+=}|[\]\\:';<>?,./\x22]*"
+      bind:value={opts.name}>
     </label>
     <label class="labeled-input">
       <span>Symbol</span>

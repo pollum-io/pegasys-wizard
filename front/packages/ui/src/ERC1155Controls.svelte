@@ -27,7 +27,9 @@
 
   <label class="labeled-input">
     <span>Name</span>
-    <input bind:value={opts.name}>
+    <input 
+    type="text" pattern="[^`~!@#$%\^&*()_+=}|[\]\\:';<>?,./\x22]*"
+    bind:value={opts.name}>
   </label>
   <label class="labeled-input">
     <span class="flex justify-between pr-2">

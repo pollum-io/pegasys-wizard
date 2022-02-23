@@ -92,10 +92,18 @@
     }
     return srt.substring(i);
   }
+  const regex = /["'\/\[\]~!@#\$%\^\&*\)\(+=._-]+/g;
 
   function removeSymbolsFromFront(srt) {
-    var outString = srt.replace(/[`~!@#%^&*()_|+\-=?;:'",.<>\{\}\[\]\\\/]/gi, '');
-    return outString
+    var outString = srt.replace(regex, "");
+    return outString;
+  }
+
+  function isValidName(name: string): boolean {
+    if (name.match(regex)) {
+      return false;
+    }
+    return true;
   }
 
   const compilerHandler = async () => {
@@ -103,23 +111,27 @@
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
 
-      const contractNoNumber = removeNumbersFromFront(titleContract);
-      const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
-      console.log(contractNoSymbols);
-      axios.defaults.headers.post["Content-Type"] =
-        "application/x-www-form-urlencoded";
-      axios
-        .post(url, {
-          title: contractNoSymbols,
-          code: code,
-        })
-        .then(async (res) => {
-          console.log(res);
-          await deployHandler();
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      if (isValidName(titleContract)) {
+        const contractNoNumber = removeNumbersFromFront(titleContract);
+        const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+        console.log(contractNoSymbols);
+        axios.defaults.headers.post["Content-Type"] =
+          "application/x-www-form-urlencoded";
+        axios
+          .post(url, {
+            title: contractNoSymbols,
+            code: code,
+          })
+          .then(async (res) => {
+            console.log(res);
+            await deployHandler();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      } else {
+        alert("Please enter a valid name");
+      }
     }
   };
 
@@ -204,7 +216,7 @@
       </button>
       <button
         class="action-button"
-        class:disabled={opts?.upgradeable}
+        class:disabled={opts?.name.match(regex)}
         on:click={compilerHandler}
       >
         <RemixIcon />
