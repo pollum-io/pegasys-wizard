@@ -46,11 +46,11 @@ body {
   margin: auto;
   color: #2c374b;
   font-family: 'silka', Arial, Helvetica, sans-serif;
-  background: #362c33;
+ 
 }
-/* .hero img {
-  height: 2rem;
-} */
+.hero img {
+  height: 6rem;
+}
 .hero a {
   color: inherit;
 }
@@ -81,6 +81,13 @@ body {
   }
 }
 
+.star {
+  top:0;
+  position: relative;
+   z-index: -1;
+   width: 100%;
+   height: 100%;
+}
 .hero p {
   margin: 0 auto;
   font-size: 1.3em;
