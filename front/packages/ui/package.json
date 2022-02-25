@@ -17,6 +17,7 @@
     "@rollup/plugin-typescript": "^8.2.0",
     "@types/file-saver": "^2.0.1",
     "@types/resize-observer-browser": "^0.1.5",
+    "@types/styled-components": "^5.1.23",
     "@types/uuid": "^8.3.0",
     "autoprefixer": "^10.4.2",
     "path-browserify": "^1.0.1",
@@ -40,7 +41,9 @@
     "file-saver": "^2.0.5",
     "highlight.js": "^11.0.0",
     "highlightjs-solidity": "^2.0.0",
+    "polished": "^4.1.4",
     "sirv-cli": "^2.0.0",
+    "styled-components": "^5.3.3",
     "tippy.js": "^6.3.1",
     "uuid": "^8.3.2"
   }

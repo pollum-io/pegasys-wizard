@@ -46,3 +46,15 @@
   --icon-adjust: 0.125em;
 
 }
+.cores {
+  /* Cores usadas nas telas */
+  color: #00d9ef;
+  color: #153d6f70;
+  color: #04d3c0;
+  color: #2d384f;
+  color: #FFFFFF;
+  color: #315df6;
+  color: #25afc4;
+  color: linear-gradient(128.17deg, rgb(104, 83, 217) -14.78%, rgb(189, 0, 255) 110.05%); /* LOGO PSYS */
+  color: linear-gradient(160deg,#0093E9 0%,#80D0C7 100%);
+}
