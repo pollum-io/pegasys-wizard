@@ -9,6 +9,7 @@
 /* General */
 
 body {
+  background-color: #2C2F36;
   color: var(--text-color);
   font-family: var(--sans-serif);
 }

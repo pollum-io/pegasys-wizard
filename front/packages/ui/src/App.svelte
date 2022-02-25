@@ -303,8 +303,8 @@
       </div>
     </div>
 
-    <div class="output flex flex-col grow overflow-auto">
-      <pre class="flex flex-col grow basis-0 overflow-auto">
+    <div class="output flex flex-col grow ">
+      <pre class="flex flex-col grow basis-0 ">
   <code class="hljs grow overflow-auto p-4">
   {@html highlightedCode}
   </code>
@@ -320,6 +320,8 @@
     border-radius: 10px;
     min-width: 32rem;
     min-height: 53rem;
+  
+   
   }
 
   .header {
@@ -393,6 +395,7 @@
   .output {
     border-radius: 5px;
     box-shadow: var(--shadow);
+    //background-color: rgb(46, 235, 29);
   }
 
   .controls-footer {

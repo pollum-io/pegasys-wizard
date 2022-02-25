@@ -3,7 +3,7 @@
 <head>
   <meta charset='utf-8'>
   <meta name='viewport' content='width=device-width,initial-scale=1'>
-  <title>OpenZeppelin Contracts Wizard</title>
+  <title>Pegasys Contracts Wizard</title>
 
   <!-- Twitter card -->
   <meta name="twitter:card" content="summary_large_image">
@@ -13,23 +13,24 @@
   <meta name="twitter:image" content="/tw-card.png">
 
   <!-- Favicons -->
-  <link rel='icon' type='image/png' href='/favicons/favicon.ico'>
-  <link rel="apple-touch-icon" sizes="57x57" href="/favicons/apple-icon-57x57.png" />
-  <link rel="apple-touch-icon" sizes="60x60" href="/favicons/apple-icon-60x60.png" />
-  <link rel="apple-touch-icon" sizes="72x72" href="/favicons/apple-icon-72x72.png" />
-  <link rel="apple-touch-icon" sizes="76x76" href="/favicons/apple-icon-76x76.png" />
-  <link rel="apple-touch-icon" sizes="114x114" href="/favicons/apple-icon-114x114.png" />
-  <link rel="apple-touch-icon" sizes="120x120" href="/favicons/apple-icon-120x120.png" />
-  <link rel="apple-touch-icon" sizes="144x144" href="/favicons/apple-icon-144x144.png" />
-  <link rel="apple-touch-icon" sizes="152x152" href="/favicons/apple-icon-152x152.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-icon-180x180.png" />
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicons/favicon-16x16.png" />
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicons/favicon-32x32.png" />
-  <link rel="icon" type="image/png" sizes="96x96" href="/favicons/favicon-96x96.png" />
-  <link rel="icon" type="image/png" sizes="192x192" href="/favicons/favicon-192x192.png" />
-  <meta name="msapplication-TileColor" content="#ffffff">
-  <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
-  <meta name="theme-color" content="#ffffff">
+  <link rel='icon' type='image/png' href='/favicons/transparent-bg-pegasys-horizontal.png'>
+  <link rel="apple-touch-icon" sizes="57x57" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="60x60" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="72x72" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="76x76" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="114x114" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="120x120" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="144x144" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="152x152" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/transparent-bg-pegasys-horizontal.png" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/favicons/transparent-bg-pegasys-horizontal.png" />
+  <link rel="stylesheet" type="text/css" href="./style/stars.css" media="screen" />
+  <meta name="msapplication-TileColor" content="#2C2F36">
+  <meta name="msapplication-TileImage" content="/transparent-bg-pegasys-horizontal.png">
+  <meta name="theme-color" content="#2C2F36">
 
   <!-- Scripts and CSS -->
   <link rel="preload" href="/fonts/silka-regular-webfont.woff2" as="font" type="font/woff2" crossorigin>
@@ -38,9 +39,11 @@
   <script async src='/build/embed.js'></script>
 </head>
 <body>
+
+ 
   <div class="hero">
     <a href="https://openzeppelin.com/">
-      <img src="/logo.svg" alt="OpenZeppelin">
+      <img  height="100px" weight="100px" src="./favicons/transparent-bg-pegasys-horizontal.png" 
     </a>
     <h1>Contracts Wizard</h1>
     <p>Use the interactive generator below to bootstrap your smart contract and learn about <a href="https://openzeppelin.com/contracts">OpenZeppelin Contracts</a>.</p>
@@ -50,6 +53,8 @@
     <oz-wizard class="wizard" data-sync-url="fragment"></oz-wizard>
   </div>
 
+ <div id="stars"></div>
+
   <div class="faq">
     <ul>
       <li>
@@ -58,7 +63,7 @@
       </li>
       <li>
         <h3>How can I use this?</h3>
-        <p>Select the kind of contract that you want (current support for ERC20, ERC721, ERC1155, and Governor), set your parameters and desired features (token name, symbol, premint amount, access control, etc.), and Contracts Wizard will generate all of the code necessary. The resulting code is ready to be compiled and deployed, or it can serve as a starting point and customized further with application specific logic.</p>
+        <p>Select the kind of contract that you want (current support for ERC20, ERC721, ERC1155, set your parameters and desired features (token name, symbol, premint amount, access control, etc.), and Contracts Wizard will generate all of the code necessary. The resulting code is ready to be compiled and deployed, or it can serve as a starting point and customized further with application specific logic.</p>
       </li>
       <li>
         <h3>What can I do with the code?</h3>
@@ -67,11 +72,6 @@
     </ul>
   </div>
 
-  <div class="defender">
-    <h2>Ship faster with the security of OpenZeppelin Defender</h2>
-    <p>After deploying your smart contract you can upload it to OpenZeppelin Defender and automate your operations delivering high-quality products with lower risk to users.</p>
-    <a href="https://defender.openzeppelin.com/" target="_blank">Sign up for free</a>
-  </div>
 
   <footer>
     <div class="footer-icons">
