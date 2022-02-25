@@ -91,7 +91,7 @@ input[type="number"] {
   }
 
   .checked {
-    accent-color: rgb(189, 0, 255) ;
+    accent-color:  #60aedc;
   }
 }
 

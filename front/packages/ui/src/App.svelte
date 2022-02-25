@@ -353,7 +353,7 @@
   }
 
   .tab button.selected {
-    background-color: rgb(189, 0, 255) ;
+    background: linear-gradient(160deg,#0093E9 0%,#80D0C7 100%, #00d9ef, #153d6f70, #04d3c0, #2d384f, #FFFFFF, #315df6, #25afc4);
     color: white;
     order: -1;
   }
