@@ -206,6 +206,12 @@
         >
           ERC1155
         </button>
+        <button
+          class:selected={tab === "Governor"}
+          on:click={() => (tab = "Governor")}
+        >
+          Governor
+        </button>
       </OverflowMenu>
     </div>
 
@@ -292,7 +298,12 @@
       <div class:hidden={tab !== "ERC1155"}>
         <ERC1155Controls bind:opts={allOpts.ERC1155} />
       </div>
-
+      <div class:hidden={tab !== "Governor"}>
+        <GovernorControls
+          bind:opts={allOpts.Governor}
+          errors={errors.Governor}
+        />
+      </div>
       <div class="controls-footer">
         <a href="https://forum.openzeppelin.com/" target="_blank">
           <ForumIcon /> Forum
@@ -320,8 +331,8 @@
     border-radius: 10px;
     min-width: 32rem;
     min-height: 53rem;
-  
-   
+    overflow-x: hidden;
+    
   }
 
   .header {
@@ -353,7 +364,18 @@
   }
 
   .tab button.selected {
-    background: linear-gradient(160deg,#0093E9 0%,#80D0C7 100%, #00d9ef, #153d6f70, #04d3c0, #2d384f, #FFFFFF, #315df6, #25afc4);
+    background: linear-gradient(
+      160deg,
+      #0093e9 0%,
+      #80d0c7 100%,
+      #00d9ef,
+      #153d6f70,
+      #04d3c0,
+      #2d384f,
+      #ffffff,
+      #315df6,
+      #25afc4
+    );
     color: white;
     order: -1;
   }
