@@ -145,6 +145,7 @@
       const titleContract = opts.name;
       const contractNoNumber = removeNumbersFromFront(titleContract);
       const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+     
       console.log(contractNoSymbols);
       axios
         .get(url + `/${contractNoSymbols}`)
@@ -155,6 +156,66 @@
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
           await contract.deploy().catch((err) => {
             console.log(err);
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  };
+  const compilerWithArgsHandler = async () => {
+    if (opts) {
+      const url = "http://localhost:3000/compiler";
+      const titleContract = opts.name;
+
+      if (isValidName(titleContract)) {
+        const contractNoNumber = removeNumbersFromFront(titleContract);
+        const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+        console.log(contractNoSymbols);
+        axios.defaults.headers.post["Content-Type"] =
+          "application/x-www-form-urlencoded";
+        axios
+          .post(url, {
+            title: contractNoSymbols,
+            code: code,
+          })
+          .then(async (res) => {
+            console.log(res);
+            await deployWithArgsHandler();
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      } else {
+        alert("Please enter a valid name");
+      }
+    }
+  };
+
+  const deployWithArgsHandler = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    console.log("Account:", await signer.getAddress());
+    if (opts) {
+      const url = "http://localhost:3000/compiler";
+      const titleContract = opts.name;
+      const contractNoNumber = removeNumbersFromFront(titleContract);
+      const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
+     
+      console.log(contractNoSymbols);
+      axios
+        .get(url + `/${contractNoSymbols}`)
+        .then(async (response) => {
+      
+            const constructorArgs = [opts.constructorToken, opts.constructorTimelock];
+            console.log(response.data);
+            const abi = response.data.abi;
+            const bytecode = response.data.bytecode;
+            const contract = new ethers.ContractFactory(abi, bytecode, signer);
+            console.log(opts.constructorToken + opts.constructorTimelock)
+            await contract.deploy(...constructorArgs).catch((err) => {
+              console.log(err);
           });
         })
         .catch((err) => {
@@ -220,6 +281,8 @@
         <CopyIcon />
         Copy to Clipboard
       </button>
+
+      {#if tab === "ERC1155" || tab === "ERC721" || tab === "ERC20"}
       <button
         class="action-button"
         class:disabled={opts?.name.match(regex)}
@@ -228,6 +291,17 @@
         <RemixIcon />
         Compile & Deploy
       </button>
+      {/if}
+      {#if tab === "Governor"}
+      <button
+        class="action-button"
+        class:disabled={opts?.name.match(regex)}
+        on:click={compilerWithArgsHandler}
+      >
+        <RemixIcon />
+        Compile & Deploy
+      </button>
+      {/if}
       <Tooltip
         let:trigger
         disabled={!opts?.upgradeable}

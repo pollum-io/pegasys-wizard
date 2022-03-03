@@ -14,6 +14,8 @@
   export const opts: Required<KindedOptions['Governor']> = {
     kind: 'Governor',
     name: 'MyGovernor',
+    constructorToken:"",
+    constructorTimelock:"",
     delay: '1 block',
     period: '1 week',
     blockTime: defaults.blockTime,
@@ -54,8 +56,24 @@
 
   <label class="labeled-input">
     <span>Name</span>
-    <input bind:value={opts.name}>
+    <input  bind:value={opts.name}>
   </label>
+
+  <label class="labeled-input">
+    <span class="flex justify-between pr-2">
+      Token Address
+      <HelpTooltip>Token Address for governance.</HelpTooltip>
+    </span>
+    <input placeholder={"0x000..."} bind:value={opts.constructorToken}>
+  </label>
+  <label class="labeled-input">
+    <span class="flex justify-between pr-2">
+      Time Lock
+      <HelpTooltip>Governor Timelock Controller instance address.</HelpTooltip>
+    </span>
+    <input placeholder={"0x000..."} bind:value={opts.constructorTimelock}>
+  </label>
+ 
 
   <div class="grid grid-cols-2 gap-2">
     <label class="labeled-input">

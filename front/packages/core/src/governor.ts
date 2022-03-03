@@ -27,6 +27,8 @@ export type TimelockOptions = typeof timelockOptions[number];
 
 export interface GovernorOptions extends CommonOptions {
   name: string;
+  constructorToken:"",
+  constructorTimelock:"",
   delay: string;
   period: string;
   blockTime?: number;
