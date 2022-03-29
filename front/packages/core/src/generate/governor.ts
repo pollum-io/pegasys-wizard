@@ -8,6 +8,8 @@ const booleans = [true, false];
 
 const blueprint = {
   name: ['MyGovernor'],
+  constructorToken: ['0x0000000000000000000000000000000000000000'],
+  constructorTimeLock: ['0x0000000000000000000000000000000000000000'],
   delay: ['1 week'],
   period: ['1 week'],
   blockTime: [defaults.blockTime],

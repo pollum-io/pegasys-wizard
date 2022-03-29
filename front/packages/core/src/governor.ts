@@ -27,8 +27,8 @@ export type TimelockOptions = typeof timelockOptions[number];
 
 export interface GovernorOptions extends CommonOptions {
   name: string;
-  constructorToken:"",
-  constructorTimelock:"",
+  constructorToken:string,
+  constructorTimeLock:string,
   delay: string;
   period: string;
   blockTime?: number;
@@ -47,6 +47,8 @@ function withDefaults(opts: GovernorOptions): Required<GovernorOptions> {
   return {
     ...opts,
     ...withCommonDefaults(opts),
+    constructorToken:opts.constructorToken,
+    constructorTimeLock: opts.constructorTimeLock,
     decimals: opts.decimals || defaults.decimals,
     blockTime: opts.blockTime || defaults.blockTime,
     quorumPercent: opts.quorumPercent ?? defaults.quorumPercent,
