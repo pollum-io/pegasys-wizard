@@ -267,12 +267,12 @@
         >
           ERC1155
         </button>
-        <button
+        <!-- <button
           class:selected={tab === "Governor"}
           on:click={() => (tab = "Governor")}
         >
           Governor
-        </button>
+        </button> -->
       </OverflowMenu>
     </div>
 
