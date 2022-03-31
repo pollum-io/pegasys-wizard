@@ -108,7 +108,7 @@
 
   const compilerHandler = async () => {
     if (opts) {
-      const url = "http://localhost:3000/compiler";
+      const url = "http://18.118.99.100/compiler";
       const titleContract = opts.name;
 
       if (isValidName(titleContract)) {
@@ -141,7 +141,7 @@
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
     if (opts) {
-      const url = "http://localhost:3000/compiler";
+      const url = "http://18.118.99.100/compiler";
       const titleContract = opts.name;
       const contractNoNumber = removeNumbersFromFront(titleContract);
       const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
@@ -165,7 +165,7 @@
   };
   const compilerWithArgsHandler = async () => {
     if (opts) {
-      const url = "http://localhost:3000/compiler";
+      const url = "http://18.118.99.100/compiler";
       const titleContract = opts.name;
 
       if (isValidName(titleContract)) {
@@ -198,7 +198,7 @@
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
     if (opts) {
-      const url = "http://localhost:3000/compiler";
+      const url = "http://18.118.99.100/compiler";
       const titleContract = opts.name;
       const contractNoNumber = removeNumbersFromFront(titleContract);
       const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
