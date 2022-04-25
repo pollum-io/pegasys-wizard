@@ -34,6 +34,11 @@
   import { remixURL } from "./remix";
   import Tooltip from "./Tooltip.svelte";
   import { ethers } from "ethers";
+  import { RingLoader } from "svelte-loading-spinners";
+
+  import PegasysVoteBytecode from "./abi/PegasysVoteBytecode.json";
+  import PegasysVoteAbi from "./abi/PegasysVoteAbi.json";
+  import PegasysToken from "@pollum-io/pegasys-protocol/artifacts/contracts/PegasysToken.sol/PegasysToken.json";
 
   const dispatch = createEventDispatcher();
 
@@ -75,6 +80,60 @@
     }
   };
 
+  //http://tanenbaum.io/address/0x81821498cd456c9f9239010f3a9f755f3a38a778
+
+  // const connectWallet = async () => {
+  //   const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+  //   await provider.send("eth_requestAccounts", []);
+  //   return signer = provider.getSigner();
+  // }
+  const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
+
+  /**
+   * Truncates an ethereum address to the format 0x0000…0000
+   * @param address Full address to truncate
+   * @returns Truncated address
+   */
+  const truncateEthAddress = (address) => {
+    const match = address.match(truncateRegex);
+    if (!match) return address;
+    return `${match[1]}…${match[2]}`;
+  };
+  let signerAddress;
+  let psysBalance;
+  let unlockAddress;
+
+  const handleLockWizard = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const signerFullAddress = await signer.getAddress();
+    signerAddress = truncateEthAddress(signerFullAddress);
+    console.log("Account:", signerAddress);
+    const contract = new ethers.ContractFactory(
+      PegasysVoteAbi.output.abi,
+      PegasysVoteBytecode.data.bytecode,
+      signer
+    );
+    const contractPsysToken = new ethers.ContractFactory(
+      PegasysToken.abi,
+      PegasysToken.bytecode,
+      signer
+    );
+
+    const contractPegasysVote = await contract.attach(
+      "0xDB0ddF4c3b3aB7d16Ec5Ff8Ca29B00267aE42760"
+    );
+    const psysToken = await contractPsysToken.attach(
+      "0x81821498cD456c9f9239010f3A9F755F3A38A778"
+    );
+    psysBalance = await psysToken.balanceOf(signerFullAddress);
+    psysBalance = ethers.utils.formatEther(psysBalance);
+    psysBalance = parseFloat(psysBalance).toFixed(4);
+    unlockAddress = await contractPegasysVote.getBalance();
+    console.log("deuu boa", unlockAddress, psysBalance);
+  };
+  handleLockWizard();
   const remixHandler = async (e: MouseEvent) => {
     e.preventDefault();
     if ((e.target as Element)?.classList.contains("disabled")) return;
@@ -108,7 +167,7 @@
 
   const compilerHandler = async () => {
     if (opts) {
-      const url = "http://18.118.99.100/compiler";
+      const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
 
       if (isValidName(titleContract)) {
@@ -134,18 +193,21 @@
       }
     }
   };
+  let contractAddress;
+  let deployTransaction = false;
 
   const deployHandler = async () => {
+    deployTransaction = true;
     const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
     if (opts) {
-      const url = "http://18.118.99.100/compiler";
+      const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
       const contractNoNumber = removeNumbersFromFront(titleContract);
       const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
-     
+
       console.log(contractNoSymbols);
       axios
         .get(url + `/${contractNoSymbols}`)
@@ -154,9 +216,15 @@
           const abi = response.data.abi;
           const bytecode = response.data.bytecode;
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
-          await contract.deploy().catch((err) => {
-            console.log(err);
-          });
+
+          const deploy = await contract
+            .deploy()
+            .catch(() => {
+              deployTransaction = false;
+            });
+            deployTransaction = false;
+        contractAddress = await deploy.address;
+          //deployTransaction = await deploy.deployTransaction.wait()
         })
         .catch((err) => {
           console.log(err);
@@ -165,7 +233,7 @@
   };
   const compilerWithArgsHandler = async () => {
     if (opts) {
-      const url = "http://18.118.99.100/compiler";
+      const url = "http://localhost:3000compiler";
       const titleContract = opts.name;
 
       if (isValidName(titleContract)) {
@@ -198,25 +266,33 @@
     const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
     if (opts) {
-      const url = "http://18.118.99.100/compiler";
+      const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
       const contractNoNumber = removeNumbersFromFront(titleContract);
       const contractNoSymbols = removeSymbolsFromFront(contractNoNumber);
-     
+
       console.log(contractNoSymbols);
       axios
         .get(url + `/${contractNoSymbols}`)
         .then(async (response) => {
+          const constructorArgs = [
+            opts.constructorToken,
+            opts.constructorTimelock,
+          ];
+          console.log(response.data);
+          const abi = response.data.abi;
+          const bytecode = response.data.bytecode;
+          const contract = new ethers.ContractFactory(abi, bytecode, signer);
+          const deploy = await contract
+            .deploy(...constructorArgs)
+            .then(async () => {
+              deployTransaction = false;
       
-            const constructorArgs = [opts.constructorToken, opts.constructorTimelock];
-            console.log(response.data);
-            const abi = response.data.abi;
-            const bytecode = response.data.bytecode;
-            const contract = new ethers.ContractFactory(abi, bytecode, signer);
-            console.log(opts.constructorToken + opts.constructorTimelock)
-            await contract.deploy(...constructorArgs).catch((err) => {
-              console.log(err);
-          });
+            })
+            .catch(() => {
+              deployTransaction = false;
+            });
+            contractAddress = await deploy.address;
         })
         .catch((err) => {
           console.log(err);
@@ -245,158 +321,206 @@
   };
 </script>
 
-<div class="container flex flex-col gap-4 p-4">
-  <div class="header flex flex-row justify-between">
-    <div class="tab overflow-hidden">
-      <OverflowMenu>
-        <button
-          class:selected={tab === "ERC20"}
-          on:click={() => (tab = "ERC20")}
-        >
-          ERC20
-        </button>
-        <button
-          class:selected={tab === "ERC721"}
-          on:click={() => (tab = "ERC721")}
-        >
-          ERC721
-        </button>
-        <button
-          class:selected={tab === "ERC1155"}
-          on:click={() => (tab = "ERC1155")}
-        >
-          ERC1155
-        </button>
-        <!-- <button
+<!-- <div class="container-pai">
+  <div class="menus">
+  </div>
+  <div class="infos-user">
+   </div>
+</div> -->
+{#if unlockAddress}
+  <div class="container flex flex-col gap-4 p-4">
+    <div class="header flex flex-row justify-between">
+      <div class="tab overflow-hidden">
+        <OverflowMenu>
+          <button
+            class:selected={tab === "ERC20"}
+            on:click={() => (tab = "ERC20")}
+          >
+            ERC20
+          </button>
+          <button
+            class:selected={tab === "ERC721"}
+            on:click={() => (tab = "ERC721")}
+          >
+            ERC721
+          </button>
+          <button
+            class:selected={tab === "ERC1155"}
+            on:click={() => (tab = "ERC1155")}
+          >
+            ERC1155
+          </button>
+          <!-- <button
           class:selected={tab === "Governor"}
           on:click={() => (tab = "Governor")}
         >
           Governor
         </button> -->
-      </OverflowMenu>
-    </div>
+        </OverflowMenu>
+      </div>
 
-    <div class="action flex flex-row gap-2 shrink-0">
-      <button class="action-button" on:click={copyHandler}>
-        <CopyIcon />
-        Copy to Clipboard
-      </button>
+      <div class="action flex flex-row gap-2 shrink-0">
+        {#if deployTransaction == true}
+          <RingLoader size="33" color="#7227ce" unit="px" duration="2s" />
+        {/if}
+        {#if tab === "ERC1155" || tab === "ERC721" || tab === "ERC20"}
+          <button
+            class="action-button-2"
+            class:disabled={opts?.name.match(regex)}
+            on:click={compilerHandler}
+          >
+            Deploy
+          </button>
+        {/if}
+        {#if tab === "Governor"}
+          <button
+            class="action-button-2"
+            class:disabled={opts?.name.match(regex)}
+            on:click={compilerWithArgsHandler}
+          >
+            Deploy
+          </button>
+        {/if}
 
-      {#if tab === "ERC1155" || tab === "ERC721" || tab === "ERC20"}
-      <button
-        class="action-button"
-        class:disabled={opts?.name.match(regex)}
-        on:click={compilerHandler}
-      >
-        <RemixIcon />
-        Compile & Deploy
-      </button>
-      {/if}
-      {#if tab === "Governor"}
-      <button
-        class="action-button"
-        class:disabled={opts?.name.match(regex)}
-        on:click={compilerWithArgsHandler}
-      >
-        <RemixIcon />
-        Compile & Deploy
-      </button>
-      {/if}
-      <Tooltip
-        let:trigger
-        disabled={!opts?.upgradeable}
-        theme="light-red border"
-        interactive
-        hideOnClick={false}
-      >
         <button
-          use:trigger
-          class="action-button"
-          class:disabled={opts?.upgradeable}
-          on:click={remixHandler}
+          class="action-button-3"
+          class:disabled={opts?.name.match(regex)}
+          on:click={handleLockWizard}
         >
-          <RemixIcon />
-          Open in Remix
+          {psysBalance} PSYS
         </button>
-        <div slot="content">
-          Upgradeable contracts are not supported on Remix. Use Hardhat or
-          Truffle with <a
-            href="https://docs.openzeppelin.com/upgrades-plugins/"
-            target="_blank">OpenZeppelin Upgrades</a
-          >.
-          <br />
-          <!-- svelte-ignore a11y-invalid-attribute -->
-          <a href="#" on:click={remixHandler}>Open in Remix anyway</a>.
+        <button
+          class="action-button-4"
+          class:disabled={opts?.name.match(regex)}
+          on:click={handleLockWizard}
+        >
+          {signerAddress}
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-row gap-4 grow">
+      <div class="controls w-64 flex flex-col shrink-0 justify-between">
+        <div class:hidden={tab !== "ERC20"}>
+          <ERC20Controls bind:opts={allOpts.ERC20} />
         </div>
-      </Tooltip>
-
-      <Dropdown let:active>
-        <button class="action-button" class:active slot="button">
-          <DownloadIcon />
-          Download
-        </button>
-
-        <button class="download-option" on:click={downloadNpmHandler}>
-          <FileIcon />
-          <div class="download-option-content">
-            <p>Single file</p>
-            <p>
-              Requires installation of npm package (<code
-                >@openzeppelin/contracts</code
-              >).
-            </p>
-            <p>Simple to receive updates.</p>
-          </div>
-        </button>
-
-        <button class="download-option" on:click={downloadVendoredHandler}>
-          <ZipIcon />
-          <div class="download-option-content">
-            <p>Vendored ZIP <span class="download-zip-beta">Beta</span></p>
-            <p>Does not require npm package.</p>
-            <p>Must be updated manually.</p>
-          </div>
-        </button>
-      </Dropdown>
-    </div>
-  </div>
-
-  <div class="flex flex-row gap-4 grow">
-    <div class="controls w-64 flex flex-col shrink-0 justify-between">
-      <div class:hidden={tab !== "ERC20"}>
-        <ERC20Controls bind:opts={allOpts.ERC20} />
+        <div class:hidden={tab !== "ERC721"}>
+          <ERC721Controls bind:opts={allOpts.ERC721} />
+        </div>
+        <div class:hidden={tab !== "ERC1155"}>
+          <ERC1155Controls bind:opts={allOpts.ERC1155} />
+        </div>
+        <div class:hidden={tab !== "Governor"}>
+          <GovernorControls
+            bind:opts={allOpts.Governor}
+            errors={errors.Governor}
+          />
+        </div>
+        <div class="controls-footer">
+          <a href="https://forum.openzeppelin.com/" target="_blank">
+            <ForumIcon /> Forum
+          </a>
+          <a href="https://docs.openzeppelin.com/" target="_blank">
+            <DocsIcon /> Docs
+          </a>
+        </div>
       </div>
-      <div class:hidden={tab !== "ERC721"}>
-        <ERC721Controls bind:opts={allOpts.ERC721} />
-      </div>
-      <div class:hidden={tab !== "ERC1155"}>
-        <ERC1155Controls bind:opts={allOpts.ERC1155} />
-      </div>
-      <div class:hidden={tab !== "Governor"}>
-        <GovernorControls
-          bind:opts={allOpts.Governor}
-          errors={errors.Governor}
-        />
-      </div>
-      <div class="controls-footer">
-        <a href="https://forum.openzeppelin.com/" target="_blank">
-          <ForumIcon /> Forum
-        </a>
-        <a href="https://docs.openzeppelin.com/" target="_blank">
-          <DocsIcon /> Docs
-        </a>
-      </div>
-    </div>
 
-    <div class="output flex flex-col grow ">
-      <pre class="flex flex-col grow basis-0 ">
+      <div class="output flex flex-col grow ">
+        <pre class="flex flex-col grow basis-0 ">
   <code class="hljs grow overflow-auto p-4">
   {@html highlightedCode}
   </code>
   </pre>
+      </div>
+    </div>
+    <div class="action flex flex-row gap-2 shrink-0">
+      <div class="action flex flex-row gap-2 shrink-0">
+        <button class="action-button" on:click={copyHandler}>
+          <CopyIcon />
+          Copy to Clipboard
+        </button>
+        <Tooltip
+          let:trigger
+          disabled={!opts?.upgradeable}
+          theme="light-red border"
+          interactive
+          hideOnClick={false}
+        >
+          <button
+            use:trigger
+            class="action-button"
+            class:disabled={opts?.upgradeable}
+            on:click={remixHandler}
+          >
+            <RemixIcon />
+            Open in Remix
+          </button>
+          <div slot="content">
+            Upgradeable contracts are not supported on Remix. Use Hardhat or
+            Truffle with <a
+              href="https://docs.openzeppelin.com/upgrades-plugins/"
+              target="_blank">OpenZeppelin Upgrades</a
+            >.
+            <br />
+            <!-- svelte-ignore a11y-invalid-attribute -->
+            <a href="#" on:click={remixHandler}>Open in Remix anyway</a>.
+          </div>
+        </Tooltip>
+
+        <Dropdown let:active>
+          <button class="action-button" class:active slot="button">
+            <DownloadIcon />
+            Download
+          </button>
+
+          <button class="download-option" on:click={downloadNpmHandler}>
+            <FileIcon />
+            <div class="download-option-content">
+              <p>Single file</p>
+              <p>
+                Requires installation of npm package (<code
+                  >@openzeppelin/contracts</code
+                >).
+              </p>
+              <p>Simple to receive updates.</p>
+            </div>
+          </button>
+
+          <button class="download-option" on:click={downloadVendoredHandler}>
+            <ZipIcon />
+            <div class="download-option-content">
+              <p>Vendored ZIP <span class="download-zip-beta">Beta</span></p>
+              <p>Does not require npm package.</p>
+              <p>Must be updated manually.</p>
+            </div>
+          </button>
+        </Dropdown>
+        {#if contractAddress}
+          <a
+            class="action-button"
+            href="https://tanenbaum.io/address/{contractAddress}"
+            target="_blank"
+          >
+            Deployed at: {contractAddress}
+          </a>
+        {/if}
+      </div>
     </div>
   </div>
-</div>
+{/if}
+
+{#if !unlockAddress }
+  <div class="container-2">
+    <button
+      class="action-button"
+      class:disabled={opts?.name.match(regex)}
+      on:click={handleLockWizard}
+    >
+      Connect Wallet
+    </button>
+  </div>
+{/if}
 
 <style lang="postcss">
   .container {
@@ -404,9 +528,18 @@
     border: 1px solid var(--gray-2);
     border-radius: 10px;
     min-width: 32rem;
-    min-height: 53rem;
+    min-height: 3rem;
     overflow-x: hidden;
-    
+  }
+  .container-2 {
+    background-color: var(--gray-1);
+    /* border: 1px solid var(--gray-2);
+    border-radius: 10px; */
+    min-width: 32rem;
+    min-height: 3rem;
+    overflow-x: hidden;
+
+    opacity: 0.5;
   }
 
   .header {
@@ -462,6 +595,177 @@
     background-color: var(--gray-1);
     border: 1px solid var(--gray-3);
     color: var(--gray-6);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
+  }
+  .tab button,
+  .action-button-2,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-2 {
+    background: linear-gradient(
+      160deg,
+      rgb(136, 84, 160) 0%,
+      #6912a7,
+      #7616cb,
+      100%,
+      #513974,
+      #315df6,
+      #315df6,
+      #102c91,
+      #2c12ae,
+      #5115bf
+    );
+    border: 1px solid var(--gray-3);
+    color: white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
+  }
+  .tab button,
+  .action-button-2,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-2 {
+    background: linear-gradient(
+      160deg,
+      rgb(136, 84, 160) 0%,
+      #6912a7,
+      #7616cb,
+      100%,
+      #513974,
+      #315df6,
+      #315df6,
+      #102c91,
+      #2c12ae,
+      #5115bf
+    );
+    border: 1px solid var(--gray-3);
+    color: white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
+  }
+  .tab button,
+  .action-button-3,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-3 {
+    background: linear-gradient(
+      160deg,
+      #0093e9 0%,
+      #315df6,
+      #102c91,
+      100%,
+      #00d9ef,
+      #153d6f70,
+      #315df6,
+      #102c91,
+      #315df6,
+      #25afc4
+    );
+    border: 1px solid var(--gray-3);
+    color: white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
+  }
+  .tab button,
+  .action-button-4,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-4 {
+    background: linear-gradient(
+      160deg,
+      #0093e9 0%,
+      #80d0c7 100%,
+      #00d9ef,
+      #153d6f70,
+      #04d3c0,
+      #2d384f,
+      #ffffff,
+      #315df6,
+      #25afc4
+    );
+    border: 1px solid var(--gray-3);
+    color: white;
     cursor: pointer;
 
     &:hover {
