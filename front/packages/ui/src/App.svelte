@@ -15,8 +15,7 @@
   } from "@openzeppelin/wizard";
   import axios from "axios";
   import { saveAs } from "file-saver";
-  import { createEventDispatcher } from "svelte";
-  import Dropdown from "./Dropdown.svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import ERC1155Controls from "./ERC1155Controls.svelte";
   import ERC20Controls from "./ERC20Controls.svelte";
   import ERC721Controls from "./ERC721Controls.svelte";
@@ -24,11 +23,9 @@
   import hljs from "./highlightjs";
   import CopyIcon from "./icons/CopyIcon.svelte";
   import DocsIcon from "./icons/DocsIcon.svelte";
-  import DownloadIcon from "./icons/DownloadIcon.svelte";
   import FileIcon from "./icons/FileIcon.svelte";
   import ForumIcon from "./icons/ForumIcon.svelte";
   import RemixIcon from "./icons/RemixIcon.svelte";
-  import ZipIcon from "./icons/ZipIcon.svelte";
   import OverflowMenu from "./OverflowMenu.svelte";
   import { postConfig } from "./post-config";
   import { remixURL } from "./remix";
@@ -40,6 +37,25 @@
   import PegasysVoteAbi from "./abi/PegasysVoteAbi.json";
   import PegasysToken from "@pollum-io/pegasys-protocol/artifacts/contracts/PegasysToken.sol/PegasysToken.json";
 
+  let provider
+  let signer
+   
+ const changeWallet = async () => {
+    if(window.ethereum) {
+    window.ethereum.on('chainChanged', () => {
+      window.location.reload();
+    })
+    window.ethereum.on('accountsChanged', () => {
+      window.location.reload();
+    }) }
+ }
+$: walletConnected =  changeWallet()
+
+$: unlockAddress = handleLockWizard();
+
+ 	onMount(async () => {
+    handleLockWizard();
+	});
   const dispatch = createEventDispatcher();
 
   export let tab: Kind = "ERC20";
@@ -80,20 +96,8 @@
     }
   };
 
-  //http://tanenbaum.io/address/0x81821498cd456c9f9239010f3a9f755f3a38a778
-
-  // const connectWallet = async () => {
-  //   const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-  //   await provider.send("eth_requestAccounts", []);
-  //   return signer = provider.getSigner();
-  // }
   const truncateRegex = /^(0x[a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
 
-  /**
-   * Truncates an ethereum address to the format 0x0000…0000
-   * @param address Full address to truncate
-   * @returns Truncated address
-   */
   const truncateEthAddress = (address) => {
     const match = address.match(truncateRegex);
     if (!match) return address;
@@ -101,15 +105,14 @@
   };
   let signerAddress;
   let psysBalance;
-  let unlockAddress;
+  // let unlockAddress;
 
   const handleLockWizard = async () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+    provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
+    signer = provider.getSigner();
     const signerFullAddress = await signer.getAddress();
     signerAddress = truncateEthAddress(signerFullAddress);
-    console.log("Account:", signerAddress);
     const contract = new ethers.ContractFactory(
       PegasysVoteAbi.output.abi,
       PegasysVoteBytecode.data.bytecode,
@@ -132,8 +135,9 @@
     psysBalance = parseFloat(psysBalance).toFixed(4);
     unlockAddress = await contractPegasysVote.getBalance();
     console.log("deuu boa", unlockAddress, psysBalance);
+    return unlockAddress;
   };
-  handleLockWizard();
+  
   const remixHandler = async (e: MouseEvent) => {
     e.preventDefault();
     if ((e.target as Element)?.classList.contains("disabled")) return;
@@ -198,9 +202,6 @@
 
   const deployHandler = async () => {
     deployTransaction = true;
-    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
     console.log("Account:", await signer.getAddress());
     if (opts) {
       const url = "http://localhost:3000/compiler";
@@ -222,9 +223,9 @@
             .catch(() => {
               deployTransaction = false;
             });
-            deployTransaction = false;
+             deployTransaction = false;
         contractAddress = await deploy.address;
-          //deployTransaction = await deploy.deployTransaction.wait()
+
         })
         .catch((err) => {
           console.log(err);
@@ -261,10 +262,6 @@
   };
 
   const deployWithArgsHandler = async () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum, "any");
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
-    console.log("Account:", await signer.getAddress());
     if (opts) {
       const url = "http://localhost:3000/compiler";
       const titleContract = opts.name;
@@ -285,13 +282,10 @@
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
           const deploy = await contract
             .deploy(...constructorArgs)
-            .then(async () => {
-              deployTransaction = false;
-      
-            })
             .catch(() => {
               deployTransaction = false;
             });
+            deployTransaction = false;
             contractAddress = await deploy.address;
         })
         .catch((err) => {
@@ -308,25 +302,12 @@
     }
   };
 
+
+
   const zipModule = import("@openzeppelin/wizard/zip");
 
-  const downloadVendoredHandler = async () => {
-    const { zipContract } = await zipModule;
-    const zip = zipContract(contract);
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, "contracts.zip");
-    if (opts) {
-      await postConfig(opts, "download-vendored");
-    }
-  };
-</script>
 
-<!-- <div class="container-pai">
-  <div class="menus">
-  </div>
-  <div class="infos-user">
-   </div>
-</div> -->
+</script>
 {#if unlockAddress}
   <div class="container flex flex-col gap-4 p-4">
     <div class="header flex flex-row justify-between">
@@ -467,35 +448,12 @@
             <a href="#" on:click={remixHandler}>Open in Remix anyway</a>.
           </div>
         </Tooltip>
-
-        <Dropdown let:active>
-          <button class="action-button" class:active slot="button">
-            <DownloadIcon />
+          <button class="action-button" on:click={downloadNpmHandler}>
+            <FileIcon />
             Download
           </button>
 
-          <button class="download-option" on:click={downloadNpmHandler}>
-            <FileIcon />
-            <div class="download-option-content">
-              <p>Single file</p>
-              <p>
-                Requires installation of npm package (<code
-                  >@openzeppelin/contracts</code
-                >).
-              </p>
-              <p>Simple to receive updates.</p>
-            </div>
-          </button>
-
-          <button class="download-option" on:click={downloadVendoredHandler}>
-            <ZipIcon />
-            <div class="download-option-content">
-              <p>Vendored ZIP <span class="download-zip-beta">Beta</span></p>
-              <p>Does not require npm package.</p>
-              <p>Must be updated manually.</p>
-            </div>
-          </button>
-        </Dropdown>
+       
         {#if contractAddress}
           <a
             class="action-button"
@@ -513,12 +471,19 @@
 {#if !unlockAddress }
   <div class="container-2">
     <button
-      class="action-button"
+      class="action-button-5"
       class:disabled={opts?.name.match(regex)}
       on:click={handleLockWizard}
     >
-      Connect Wallet
+    {#if signerAddress}
+    {signerAddress}
+    {/if}
+    {#if !signerAddress}
+    Connect Wallet
+    {/if}
+     
     </button>
+    <h1 class="unlock-text">You must have 500 PSYS to unlock the Pegasys Wizard.</h1>
   </div>
 {/if}
 
@@ -532,14 +497,16 @@
     overflow-x: hidden;
   }
   .container-2 {
-    background-color: var(--gray-1);
-    /* border: 1px solid var(--gray-2);
-    border-radius: 10px; */
-    min-width: 32rem;
-    min-height: 3rem;
+    background: #2124297a;
+    border: 1px solid #3c8fa17b;
+    border-radius: 10px; 
+    min-height: 20rem;
     overflow-x: hidden;
-
-    opacity: 0.5;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
 
   .header {
@@ -780,11 +747,60 @@
     &.disabled {
       color: var(--gray-4);
     }
+  
 
     :global(.icon) {
       margin-right: var(--size-1);
     }
   }
+  .tab button,
+  .action-button-5,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-5 {
+    background: linear-gradient(
+      160deg,
+      #0093e9 0%,
+      #80d0c7 100%,
+      #00d9ef,
+      #153d6f70,
+      #04d3c0,
+      #2d384f,
+      #ffffff,
+      #315df6,
+      #25afc4
+    );
+    color: #f6f8f8;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #3c8fa17b;
+    color: white;
+    cursor: pointer;
+    height: 50px;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+  
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
+  }
+  
 
   .controls {
     background-color: white;
@@ -877,5 +893,10 @@
     border-radius: 4px;
     font-size: 0.8em;
     margin-left: 0.25em;
+  }
+  .unlock-text{
+    color: var(--gray-5);
+    font-size: 20px;
+    margin-top: var(--size-2);
   }
 </style>

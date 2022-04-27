@@ -1,5 +1,6 @@
 import type { Message } from './post-message';
 
+
 if (!document.currentScript || !('src' in document.currentScript)) {
   throw new Error('Unknown script URL');
 }
@@ -21,8 +22,8 @@ onDOMContentLoaded(function () {
   const wizards = document.querySelectorAll<HTMLElement>('oz-wizard');
 
   for (const w of wizards) {
-    w.style.display = 'block';
-    w.style.minHeight = '53rem';
+     w.style.display = 'flex';
+    // w.style.minHeight = '0rem';
 
     const src = new URL('embed', currentScript.origin);
 
@@ -42,10 +43,10 @@ onDOMContentLoaded(function () {
 
     const iframe = document.createElement('iframe');
     iframe.src = src.toString();
-    iframe.style.display = 'block';
+    iframe.style.display = 'flex';
     iframe.style.border = '0';
     iframe.style.width = '100%';
-    iframe.style.height = '53rem';
+    // iframe.style.height = '53rem';
 
     w.appendChild(iframe);
 
@@ -72,5 +73,6 @@ function onDOMContentLoaded(callback: () => void) {
     callback();
   }
 }
+
 
 export {};
