@@ -37,25 +37,34 @@
   import PegasysVoteAbi from "./abi/PegasysVoteAbi.json";
   import PegasysToken from "@pollum-io/pegasys-protocol/artifacts/contracts/PegasysToken.sol/PegasysToken.json";
 
-  let provider
-  let signer
-   
- const changeWallet = async () => {
-    if(window.ethereum) {
-    window.ethereum.on('chainChanged', () => {
-      window.location.reload();
-    })
-    window.ethereum.on('accountsChanged', () => {
-      window.location.reload();
-    }) }
- }
-$: walletConnected =  changeWallet()
+  let provider;
+  let signer;
+  let isTestnet;
+  let unlockAddress;
+  let signerAddress;
+ // let psysBalance;
 
-$: unlockAddress = handleLockWizard();
 
- 	onMount(async () => {
-    handleLockWizard();
-	});
+  const changeWallet = async () => {
+    if (window.ethereum) {
+      window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+      });
+      window.ethereum.on("accountsChanged", () => {
+        window.location.reload();
+      });
+    }
+  };
+
+  $: walletConnected = changeWallet();
+  $: ChainId = isTestnet;
+
+  $: unlockAddress = handleLockWizard();
+  $: psysBalance = false
+  
+  $: isLoading = false
+
+
   const dispatch = createEventDispatcher();
 
   export let tab: Kind = "ERC20";
@@ -103,9 +112,8 @@ $: unlockAddress = handleLockWizard();
     if (!match) return address;
     return `${match[1]}…${match[2]}`;
   };
-  let signerAddress;
-  let psysBalance;
-  // let unlockAddress;
+
+
 
   const handleLockWizard = async () => {
     provider = new ethers.providers.Web3Provider(window.ethereum, "any");
@@ -113,6 +121,7 @@ $: unlockAddress = handleLockWizard();
     signer = provider.getSigner();
     const signerFullAddress = await signer.getAddress();
     signerAddress = truncateEthAddress(signerFullAddress);
+    isLoading = true; 
     const contract = new ethers.ContractFactory(
       PegasysVoteAbi.output.abi,
       PegasysVoteBytecode.data.bytecode,
@@ -134,10 +143,26 @@ $: unlockAddress = handleLockWizard();
     psysBalance = ethers.utils.formatEther(psysBalance);
     psysBalance = parseFloat(psysBalance).toFixed(4);
     unlockAddress = await contractPegasysVote.getBalance();
-    console.log("deuu boa", unlockAddress, psysBalance);
-    return unlockAddress;
+    const chainConnected = await provider.getNetwork();
+    console.log("deuu boa", unlockAddress, psysBalance, chainConnected.chainId);
+    if(chainConnected.chainId === 5700) {
+      isTestnet = true;
+      console.log("test")
+    } else if (chainConnected.chainId === 57) {
+      isTestnet = false;
+      console.log("nvm")
+    } else {
+      networkIdSys()
+    
+  }
+  if(unlockAddress) {
+    return true;
+  } else {
+    return false;
+  }
+    
   };
-  
+
   const remixHandler = async (e: MouseEvent) => {
     e.preventDefault();
     if ((e.target as Element)?.classList.contains("disabled")) return;
@@ -145,6 +170,62 @@ $: unlockAddress = handleLockWizard();
     window.open(remixURL(versionedCode).toString(), "_blank");
     if (opts) {
       await postConfig(opts, "remix");
+    }
+  };
+
+  const networks = {
+    syscoin: {
+      chainId: `0x${Number(57).toString(16)}`,
+      chainName: "Syscoin NEVM Mainnet",
+      nativeCurrency: {
+        name: "Syscoin",
+        symbol: "SYS",
+        decimals: 18,
+      },
+      rpcUrls: ["https://rpc.syscoin.org/"],
+      blockExplorerUrls: ["https://explorer.syscoin.org/"],
+    },
+    tanenbaum: {
+      chainId: `0x${Number(5700).toString(16)}`,
+      chainName: "Syscoin Tanenbaum Testnet",
+      nativeCurrency: {
+        name: "Syscoin",
+        symbol: "SYS",
+        decimals: 18,
+      },
+      rpcUrls: ["https://rpc.tanenbaum.io"],
+      blockExplorerUrl: ["https://tanenbaum.io"],
+    },
+  };
+
+  const networkIdSys = async () => {
+    try {
+      if (!window.ethereum) throw new Error("No ethereum provider found");
+      await window.ethereum
+        .request({
+          method: "wallet_addEthereumChain",
+          params: [networks.syscoin],
+        })
+        .then(() => {
+          isTestnet = false;
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const networkIdTestnet = async () => {
+    try {
+      if (!window.ethereum) throw new Error("No ethereum provider found");
+      await window.ethereum
+        .request({
+          method: "wallet_addEthereumChain",
+          params: [networks.tanenbaum],
+        })
+        .then(() => {
+          isTestnet = true;
+        });
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -218,14 +299,11 @@ $: unlockAddress = handleLockWizard();
           const bytecode = response.data.bytecode;
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
 
-          const deploy = await contract
-            .deploy()
-            .catch(() => {
-              deployTransaction = false;
-            });
-             deployTransaction = false;
-        contractAddress = await deploy.address;
-
+          const deploy = await contract.deploy().catch(() => {
+            deployTransaction = false;
+          });
+          deployTransaction = false;
+          contractAddress = await deploy.address;
         })
         .catch((err) => {
           console.log(err);
@@ -280,13 +358,11 @@ $: unlockAddress = handleLockWizard();
           const abi = response.data.abi;
           const bytecode = response.data.bytecode;
           const contract = new ethers.ContractFactory(abi, bytecode, signer);
-          const deploy = await contract
-            .deploy(...constructorArgs)
-            .catch(() => {
-              deployTransaction = false;
-            });
+          const deploy = await contract.deploy(...constructorArgs).catch(() => {
             deployTransaction = false;
-            contractAddress = await deploy.address;
+          });
+          deployTransaction = false;
+          contractAddress = await deploy.address;
         })
         .catch((err) => {
           console.log(err);
@@ -302,13 +378,10 @@ $: unlockAddress = handleLockWizard();
     }
   };
 
-
-
   const zipModule = import("@openzeppelin/wizard/zip");
-
-
 </script>
-{#if unlockAddress}
+
+{#if isLoading && signerAddress}
   <div class="container flex flex-col gap-4 p-4">
     <div class="header flex flex-row justify-between">
       <div class="tab overflow-hidden">
@@ -360,6 +433,24 @@ $: unlockAddress = handleLockWizard();
             on:click={compilerWithArgsHandler}
           >
             Deploy
+          </button>
+        {/if}
+        {#if isTestnet === false}
+          <button
+            class="action-button-7"
+            class:disabled={opts?.name.match(regex)}
+            on:click={networkIdSys}
+          >
+            NEVM Mainnet
+          </button>
+        {/if}
+        {#if isTestnet === true}
+          <button
+            class="action-button-7"
+            class:disabled={opts?.name.match(regex)}
+            on:click={networkIdTestnet}
+          >
+            Tanenbaum
           </button>
         {/if}
 
@@ -448,12 +539,11 @@ $: unlockAddress = handleLockWizard();
             <a href="#" on:click={remixHandler}>Open in Remix anyway</a>.
           </div>
         </Tooltip>
-          <button class="action-button" on:click={downloadNpmHandler}>
-            <FileIcon />
-            Download
-          </button>
+        <button class="action-button" on:click={downloadNpmHandler}>
+          <FileIcon />
+          Download
+        </button>
 
-       
         {#if contractAddress}
           <a
             class="action-button"
@@ -468,22 +558,23 @@ $: unlockAddress = handleLockWizard();
   </div>
 {/if}
 
-{#if !unlockAddress }
+{#if !psysBalance && !isLoading} 
   <div class="container-2">
     <button
       class="action-button-5"
       class:disabled={opts?.name.match(regex)}
       on:click={handleLockWizard}
     >
-    {#if signerAddress}
-    {signerAddress}
-    {/if}
-    {#if !signerAddress}
-    Connect Wallet
-    {/if}
-     
+      {#if signerAddress}
+        {signerAddress}
+      {/if}
+      {#if !signerAddress}
+        Connect Wallet
+      {/if}
     </button>
-    <h1 class="unlock-text">You must have 500 PSYS to unlock the Pegasys Wizard.</h1>
+    <h1 class="unlock-text">
+      You must have 500 PSYS to unlock the Pegasys Wizard.
+    </h1>
   </div>
 {/if}
 
@@ -499,7 +590,7 @@ $: unlockAddress = handleLockWizard();
   .container-2 {
     background: #2124297a;
     border: 1px solid #3c8fa17b;
-    border-radius: 10px; 
+    border-radius: 10px;
     min-height: 20rem;
     overflow-x: hidden;
     text-align: center;
@@ -747,7 +838,6 @@ $: unlockAddress = handleLockWizard();
     &.disabled {
       color: var(--gray-4);
     }
-  
 
     :global(.icon) {
       margin-right: var(--size-1);
@@ -794,13 +884,11 @@ $: unlockAddress = handleLockWizard();
     &.disabled {
       color: var(--gray-4);
     }
-  
 
     :global(.icon) {
       margin-right: var(--size-1);
     }
   }
-  
 
   .controls {
     background-color: white;
@@ -894,9 +982,51 @@ $: unlockAddress = handleLockWizard();
     font-size: 0.8em;
     margin-left: 0.25em;
   }
-  .unlock-text{
+  .unlock-text {
     color: var(--gray-5);
     font-size: 20px;
     margin-top: var(--size-2);
+  }
+  .tab button,
+  .action-button-7,
+  :global(.overflow-btn) {
+    padding: var(--size-2) var(--size-3);
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .action-button-7 {
+    background: linear-gradient(
+      160deg,
+      #c200e9 0%,
+      #a426b5 100%,
+      #7755d6,
+      #153d6f70,
+      #2719a0,
+      #743587,
+      #ffffff,
+      #315df6,
+      #8c3d6d
+    );
+    border: 1px solid var(--gray-3);
+    color: white;
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--gray-2);
+    }
+
+    &:active,
+    &.active {
+      background-color: var(--gray-2);
+    }
+
+    &.disabled {
+      color: var(--gray-4);
+    }
+
+    :global(.icon) {
+      margin-right: var(--size-1);
+    }
   }
 </style>
