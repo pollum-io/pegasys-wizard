@@ -42,8 +42,8 @@
   let isTestnet;
   let unlockAddress;
   let signerAddress;
- // let psysBalance;
-
+  let psysBalance;
+  let isLoaded;
 
   const changeWallet = async () => {
     if (window.ethereum) {
@@ -57,13 +57,12 @@
   };
 
   $: walletConnected = changeWallet();
-  $: ChainId = isTestnet;
-
-  $: unlockAddress = handleLockWizard();
-  $: psysBalance = false
   
-  $: isLoading = false
-
+  $: {
+     handleLockWizard().then(() => {
+      isLoaded = true;
+    });
+  }
 
   const dispatch = createEventDispatcher();
 
@@ -113,55 +112,68 @@
     return `${match[1]}…${match[2]}`;
   };
 
-
-
   const handleLockWizard = async () => {
     provider = new ethers.providers.Web3Provider(window.ethereum, "any");
     await provider.send("eth_requestAccounts", []);
     signer = provider.getSigner();
-    const signerFullAddress = await signer.getAddress();
-    signerAddress = truncateEthAddress(signerFullAddress);
-    isLoading = true; 
-    const contract = new ethers.ContractFactory(
-      PegasysVoteAbi.output.abi,
-      PegasysVoteBytecode.data.bytecode,
-      signer
-    );
-    const contractPsysToken = new ethers.ContractFactory(
-      PegasysToken.abi,
-      PegasysToken.bytecode,
-      signer
-    );
+    chainConnected = await provider.getNetwork();
+    if (chainConnected.chainId === 5700 || chainConnected.chainId === 57) {
+ 
+      const signerFullAddress = await signer.getAddress();
+      signerAddress = truncateEthAddress(signerFullAddress);
 
-    const contractPegasysVote = await contract.attach(
-      "0xDB0ddF4c3b3aB7d16Ec5Ff8Ca29B00267aE42760"
-    );
-    const psysToken = await contractPsysToken.attach(
-      "0x81821498cD456c9f9239010f3A9F755F3A38A778"
-    );
-    psysBalance = await psysToken.balanceOf(signerFullAddress);
-    psysBalance = ethers.utils.formatEther(psysBalance);
-    psysBalance = parseFloat(psysBalance).toFixed(4);
-    unlockAddress = await contractPegasysVote.getBalance();
-    const chainConnected = await provider.getNetwork();
-    console.log("deuu boa", unlockAddress, psysBalance, chainConnected.chainId);
-    if(chainConnected.chainId === 5700) {
-      isTestnet = true;
-      console.log("test")
-    } else if (chainConnected.chainId === 57) {
-      isTestnet = false;
-      console.log("nvm")
+      const contract = new ethers.ContractFactory(
+        PegasysVoteAbi.output.abi,
+        PegasysVoteBytecode.data.bytecode,
+        signer
+      );
+      const contractPsysToken = new ethers.ContractFactory(
+        PegasysToken.abi,
+        PegasysToken.bytecode,
+        signer
+      );
+
+      const contractPegasysVote = await contract.attach(
+        "0xDB0ddF4c3b3aB7d16Ec5Ff8Ca29B00267aE42760"
+      );
+      const psysToken = await contractPsysToken.attach(
+        "0x81821498cD456c9f9239010f3A9F755F3A38A778"
+      );
+      psysBalance = await psysToken.balanceOf(signerFullAddress);
+      psysBalance = ethers.utils.formatEther(psysBalance);
+      psysBalance = parseFloat(psysBalance).toFixed(4);
+      unlockAddress = await contractPegasysVote.getBalance();
+      
+      console.log(
+        "deuu boa",
+        unlockAddress,
+        psysBalance,
+        chainConnected.chainId
+      );
+      if (chainConnected.chainId === 5700) {
+        isTestnet = true;
+        console.log("test");
+      } else if (chainConnected.chainId === 57) {
+        isTestnet = false;
+        console.log("nvm");
+      }
     } else {
-      networkIdSys()
-    
+        networkIdTestnet();
+      }
   }
-  if(unlockAddress) {
-    return true;
-  } else {
-    return false;
+
+ $: chainConnected = isSysChain();
+  const isSysChain = async () => {
+    if(provider) {
+          chainConnected = await provider.getNetwork();
+    if (chainConnected.chainId === 5700 || chainConnected.chainId === 57) {
+      return true;
+    } else {
+      return false;
+    }
+    }
   }
-    
-  };
+ 
 
   const remixHandler = async (e: MouseEvent) => {
     e.preventDefault();
@@ -194,7 +206,7 @@
         decimals: 18,
       },
       rpcUrls: ["https://rpc.tanenbaum.io"],
-      blockExplorerUrl: ["https://tanenbaum.io"],
+      blockExplorerUrls: ["https://tanenbaum.io"],
     },
   };
 
@@ -213,6 +225,7 @@
       console.log(error);
     }
   };
+
   const networkIdTestnet = async () => {
     try {
       if (!window.ethereum) throw new Error("No ethereum provider found");
@@ -236,6 +249,7 @@
     }
     return srt.substring(i);
   }
+
   const regex = /["'\/\[\]~!@#\$%\^\&*\)\(+=._-]+/g;
 
   function removeSymbolsFromFront(srt) {
@@ -381,7 +395,7 @@
   const zipModule = import("@openzeppelin/wizard/zip");
 </script>
 
-{#if isLoading && signerAddress}
+{#if isLoaded && psysBalance}
   <div class="container flex flex-col gap-4 p-4">
     <div class="header flex flex-row justify-between">
       <div class="tab overflow-hidden">
@@ -558,7 +572,7 @@
   </div>
 {/if}
 
-{#if !psysBalance && !isLoading} 
+{#if !isLoaded || psysBalance === undefined }
   <div class="container-2">
     <button
       class="action-button-5"
@@ -572,8 +586,27 @@
         Connect Wallet
       {/if}
     </button>
+
+    <!-- <button
+      class="action-button-7"
+      class:disabled={opts?.name.match(regex)}
+      on:click={networkIdSys}
+    >
+      NEVM Mainnet
+    </button>
+
+    <button
+      class="action-button-7"
+      class:disabled={opts?.name.match(regex)}
+      on:click={networkIdTestnet}
+    >
+      Tanenbaum
+    </button> -->
     <h1 class="unlock-text">
-      You must have 500 PSYS to unlock the Pegasys Wizard.
+      You must be connected on Syscoin  Mainnet or Tanenbaum Testnet 
+    </h1>
+    <h1 class="unlock-text">
+       & have 500 PSYS to unlock the Pegasys Wizard.
     </h1>
   </div>
 {/if}
